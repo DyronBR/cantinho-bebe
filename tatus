@@ -1,0 +1,20 @@
+[33mcommit 3121e836a0c8194e826c40efb7c629cb388545e4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Luã Dyron <lulunap@hotmail.com>
+Date:   Sun Apr 26 15:16:42 2026 -0300
+
+    Initial commit: Cantinho do Bebê - Frontend com Next.js, React e TailwindCSS
+    
+    - Header com navegação
+    - Footer com links
+    - Página de produtos com 3 visualizações (Grid, Compacto, Lista)
+    - Modal de detalhes de produtos
+    - Filtro por categoria e busca
+    - Design premium com paleta de cores (rosa, roxo, azul)
+    - Responsivo (mobile e desktop)
+    - Integração com imagens do projeto
+
+[33mcommit f5c67fb8e3f77179a22f4f88d8b699486a104704[m
+Author: Luã Dyron <lulunap@hotmail.com>
+Date:   Sat Apr 25 19:57:00 2026 -0300
+
+    Initial commit from Create Next App
