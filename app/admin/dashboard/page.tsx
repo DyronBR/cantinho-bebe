@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseClient } from '@/lib/supabase';
@@ -7,7 +9,7 @@ import { uploadImage } from '@/lib/uploadImage';
 import NewsletterTab from '@/app/components/admin/NewsletterTab'
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
-  const supabase = createSupabaseClient();
+    const supabase = createSupabaseClient();
 
 type Category = {
     id: string;
