@@ -1,11 +1,12 @@
 export interface Product {
-    id: number;
+    id: string | number;
     name: string;
-    price: number;
-    category: string;
-    image: string;
     description: string;
-    }
+    fullDescription: string;
+    image: string;
+    category: string;  // ← MUDOU AQUI
+    specifications: Record<string, string>;
+}
 
     const products: Product[] = [
     {
