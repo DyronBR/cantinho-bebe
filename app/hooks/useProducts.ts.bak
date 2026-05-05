@@ -1,0 +1,45 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createSupabaseClient } from '@/lib/supabase';
+
+export function useProducts() {
+    const [products, setProducts] = useState<any[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        console.log('Inicializando hook useProducts...')
+
+        const supabase = createSupabaseClient()
+
+        const fetchProducts = async () => {
+        try {
+            console.log('Iniciando busca de produtos na tabela \'products\'...')
+            const { data, error } = await supabase
+            .from('products')
+            .select('*')
+
+            if (error) {
+            console.error('Erro ao buscar produtos:', error.message)
+            setError(error.message)
+            setLoading(false)
+            return
+            }
+
+            console.log(`Sucesso! Retornados ${data?.length || 0} produtos.`)
+            setProducts(data || [])
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar produtos'
+            console.error('Erro inesperado ao buscar produtos:', errorMessage)
+            setError(errorMessage)
+        } finally {
+            setLoading(false)
+        }
+        }
+
+        fetchProducts()
+    }, [])
+
+    return { products, loading, error }
+}

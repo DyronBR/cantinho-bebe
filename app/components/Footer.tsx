@@ -6,13 +6,41 @@ import { FiInstagram, FiFacebook, FiMessageCircle, FiMail, FiPhone, FiMapPin } f
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>('');
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 3000);
+    setMessage('');
+
+    if (!email || !email.trim()) {
+      setMessage('Por favor, insira um e-mail válido.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      if (response.ok) {
+        setSubscribed(true);
+        setMessage('Você foi inscrito com sucesso na nossa newsletter!');
+        setEmail('');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setMessage(errorData.error || 'Erro ao processar a inscrição.');
+      }
+    } catch (error) {
+      setMessage('Erro de conexão. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,6 +66,7 @@ export default function Footer() {
               <li><a href="#products" className="text-gray-600 hover:text-pink-500 font-medium transition-colors">Produtos</a></li>
               <li><a href="/categorias" className="text-gray-600 hover:text-pink-500 font-medium transition-colors">Categorias</a></li>
               <li><a href="/contato" className="text-gray-600 hover:text-pink-500 font-medium transition-colors">Contato</a></li>
+              <li><a href="/admin/login" className="text-gray-600 hover:text-pink-500 font-medium transition-colors">🔒 Admin</a></li>
             </ul>
           </div>
 
@@ -100,22 +129,33 @@ export default function Footer() {
             {/* Newsletter */}
             <div>
               <h5 className="text-base font-bold text-gray-900 mb-4">Newsletter</h5>
-              <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Seu email"
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all text-sm"
-                >
-                  {subscribed ? '✓ Inscrito!' : 'Inscrever-se'}
-                </button>
-              </form>
+{subscribed ? (
+  <p className="newsletter-success">Obrigado! Você está inscrito na nossa newsletter. 🎉</p>
+) : (
+            <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Seu email"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                disabled={loading}
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading || !email.trim()}
+                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Enviando...' : 'Inscrever-se'}
+              </button>
+              {message && (
+                <p className={`text-xs font-medium ${message.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}>
+                  {message}
+                </p>
+              )}
+            </form>
+          )}
             </div>
           </div>
         </div>
