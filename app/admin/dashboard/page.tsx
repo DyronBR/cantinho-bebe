@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseClient } from '@/lib/supabase';
 import { uploadImage } from '@/lib/uploadImage';
 import NewsletterTab from '@/app/components/admin/NewsletterTab'
+import Header from '@/app/components/Header';
+import Footer from '@/app/components/Footer';
   const supabase = createSupabaseClient();
 
 type Category = {
@@ -36,6 +38,9 @@ type Category = {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [productSearch, setProductSearch] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const PRODUCTS_PER_PAGE = 10;
     const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'newsletter'>('products');
 
     // Modal states for products
@@ -68,7 +73,7 @@ type Category = {
         const checkAuth = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            router.push('/login');
+            router.push('/admin/login');
             return;
         }
         };
@@ -270,8 +275,19 @@ type Category = {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        router.push('/login');
+        router.push('/');
     };
+
+    const filteredProducts = useMemo(
+        () => products.filter((p) => p.name.toLowerCase().includes(productSearch.trim().toLowerCase())),
+        [products, productSearch]
+    );
+    const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+    const safePage = Math.min(currentPage, totalPages);
+    const paginatedProducts = filteredProducts.slice(
+        (safePage - 1) * PRODUCTS_PER_PAGE,
+        safePage * PRODUCTS_PER_PAGE
+    );
 
     if (loading) {
         return (
@@ -282,6 +298,8 @@ type Category = {
     }
 
     return (
+        <>
+        <Header />
         <div className="min-h-screen bg-gradient-to-br from-[#FFB6D9] via-[#D4A5D9] to-[#87CEEB] p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
             {/* Header */}
@@ -327,14 +345,23 @@ type Category = {
             <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8">
             {activeTab === 'products' && (
                 <>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                     <h2 className="text-2xl font-bold text-[#D4A5D9]">Gerenciar Produtos</h2>
-                    <button
-                    onClick={handleAddProduct}
-                    className="bg-[#FFB6D9] hover:bg-[#FFB6D9]/90 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105 font-semibold"
-                    >
-                    + Adicionar Produto
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <input
+                            type="text"
+                            value={productSearch}
+                            onChange={(e) => { setProductSearch(e.target.value); setCurrentPage(1); }}
+                            placeholder="Buscar produto..."
+                            className="px-4 py-3 rounded-xl border border-[#D4A5D9]/50 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FFB6D9] text-gray-700 w-full sm:w-64"
+                        />
+                        <button
+                            onClick={handleAddProduct}
+                            className="bg-[#FFB6D9] hover:bg-[#FFB6D9]/90 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105 font-semibold whitespace-nowrap"
+                        >
+                            + Adicionar Produto
+                        </button>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full table-auto border-collapse bg-white rounded-xl overflow-hidden shadow-lg">
@@ -347,7 +374,9 @@ type Category = {
                         </tr>
                     </thead>
                     <tbody>
-                        {products.map((product) => {
+                        {paginatedProducts.length === 0 ? (
+                        <tr><td colSpan={4} className="p-6 text-center text-gray-500">Nenhum produto encontrado.</td></tr>
+                        ) : paginatedProducts.map((product) => {
                         const category = categories.find((c) => c.id === product.category_id);
                         return (
                             <tr key={product.id} className="hover:bg-[#FFB6D9]/10 transition-colors border-b border-gray-100">
@@ -380,6 +409,32 @@ type Category = {
                     </tbody>
                     </table>
                 </div>
+                {filteredProducts.length > 0 && totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-6">
+                    <p className="text-sm text-gray-600">
+                        Mostrando {(safePage - 1) * PRODUCTS_PER_PAGE + 1}–{Math.min(safePage * PRODUCTS_PER_PAGE, filteredProducts.length)} de {filteredProducts.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={safePage === 1}
+                            className="bg-[#87CEEB] hover:bg-[#87CEEB]/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-md transition-all"
+                        >
+                            Anterior
+                        </button>
+                        <span className="text-sm font-semibold text-[#D4A5D9] px-2">
+                            Página {safePage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={safePage === totalPages}
+                            className="bg-[#87CEEB] hover:bg-[#87CEEB]/90 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-md transition-all"
+                        >
+                            Próxima
+                        </button>
+                    </div>
+                </div>
+                )}
                 </>
             )}
 
@@ -617,6 +672,8 @@ type Category = {
             )}
         </div>
         </div>
+        <Footer />
+        </>
     );
 };
 

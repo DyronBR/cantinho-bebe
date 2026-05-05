@@ -10,10 +10,10 @@ type Product = {
   id: number;
   name: string;
   description: string;
-  fullDescription: string;
+  fullDescription?: string;
   image: string;
   category: string;
-  specifications: Specification;
+  specifications?: Specification;
 };
 
 const mockProducts: Product[] = [
@@ -392,11 +392,11 @@ const ProductModal: React.FC<{ product: Product | null; onClose: () => void; pro
               <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
             </div>
             <div className="space-y-6">
-              <p className="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{product.fullDescription}</p>
+              <p className="text-lg leading-relaxed text-gray-700 whitespace-pre-wrap">{product.fullDescription ?? product.description}</p>
               <div>
                 <h4 className="font-bold text-xl mb-4 bg-gradient-to-r from-[#FFB6D9] to-[#87CEEB] bg-clip-text text-transparent">Especificações Técnicas</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  {Object.entries(product.specifications).map(([key, value]) => (
+                  {Object.entries(product.specifications ?? {}).map(([key, value]) => (
                     <div key={key} className="space-y-1">
                       <span className="font-semibold text-gray-600">{key}:</span>
                       <span className="font-medium text-gray-800">{value}</span>
@@ -429,8 +429,8 @@ const ProductModal: React.FC<{ product: Product | null; onClose: () => void; pro
   );
 };
 
-const Products: React.FC = () => {
-  const [products] = useState<Product[]>(mockProducts);
+const Products: React.FC<{ products?: Product[] }> = ({ products: incomingProducts }) => {
+  const [products] = useState<Product[]>(incomingProducts ?? mockProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas');
