@@ -36,7 +36,7 @@ const mapRowToProduct = (row: RawProduct): Product => {
         ? row.categories[0]?.name
         : row.categories?.name
     return {
-        id: row.id,
+        id: Number(row.id),
         name: row.name,
         description: row.short_description ?? '',
         fullDescription: row.full_description ?? row.short_description ?? '',
