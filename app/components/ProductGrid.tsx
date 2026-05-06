@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import products from '@/app/data/products';
+import { useProducts } from '@/app/hooks/useProducts';
+import staticProducts from '@/app/data/products';
+import type { Product } from '@/app/data/products';
 
-interface ProductDetail {
-  id: number;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-}
+const FEATURED_COUNT = 8;
 
 export default function ProductGrid() {
-  const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const { products: supabaseProducts, loading, error } = useProducts();
+
+  // Usa produtos do Supabase se disponíveis, caso contrário usa os estáticos como fallback
+  const products: Product[] = supabaseProducts.length > 0
+    ? supabaseProducts.slice(0, FEATURED_COUNT)
+    : staticProducts.slice(0, FEATURED_COUNT);
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -38,49 +40,58 @@ export default function ProductGrid() {
             </p>
           </div>
 
-          {/* Grid de Produtos - Novo Estilo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="group bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-pink-100 hover:border-purple-300 cursor-pointer"
-                onClick={() => setSelectedProduct(product)}
-              >
-                {/* Imagem Grande em Destaque */}
-                <div className="h-64 overflow-hidden bg-gray-100 relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  {/* Badge de Categoria */}
-                  <span className={`absolute top-4 left-4 bg-gradient-to-r ${getCategoryColor(product.category)} text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg`}>
-                    {product.category}
-                  </span>
+          {/* Estado de carregamento */}
+          {loading && (
+            <div className="flex justify-center items-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+            </div>
+          )}
+
+          {/* Erro do Supabase — exibe produtos estáticos como fallback, sem mostrar erro ao usuário */}
+          {!loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="group bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-3 transition-all duration-300 border border-pink-100 hover:border-purple-300 cursor-pointer"
+                  onClick={() => setSelectedProduct(product)}
+                >
+                  {/* Imagem Grande em Destaque */}
+                  <div className="h-64 overflow-hidden bg-gray-100 relative">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {/* Badge de Categoria */}
+                    <span className={`absolute top-4 left-4 bg-gradient-to-r ${getCategoryColor(product.category)} text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg`}>
+                      {product.category}
+                    </span>
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-600 transition-colors line-clamp-2">
+                      {product.name}
+                    </h3>
+
+                    <p className="text-sm text-gray-600 mb-6 line-clamp-3">
+                      {product.description}
+                    </p>
+
+                    {/* Botão Saiba Mais */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedProduct(product); }}
+                      className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-3 px-4 rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all hover:shadow-lg group/btn flex items-center justify-center gap-2"
+                    >
+                      Saiba Mais
+                      <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
+                    </button>
+                  </div>
                 </div>
-
-                {/* Conteúdo */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-600 transition-colors line-clamp-2">
-                    {product.name}
-                  </h3>
-
-                  <p className="text-sm text-gray-600 mb-6 line-clamp-3">
-                    {product.description}
-                  </p>
-
-                  {/* Botão Saiba Mais */}
-                  <button
-                    onClick={() => setSelectedProduct(product)}
-                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-3 px-4 rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all hover:shadow-lg group/btn flex items-center justify-center gap-2"
-                  >
-                    Saiba Mais
-                    <span className="group-hover/btn:translate-x-1 transition-transform">→</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* CTA */}
           <div className="text-center mt-16 pt-12 border-t border-pink-200">
@@ -146,27 +157,33 @@ export default function ProductGrid() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-3">Descrição</h3>
-                    <p className="text-gray-700 leading-relaxed text-lg">
-                      {selectedProduct.description}
+                    <p className="text-gray-700 leading-relaxed">
+                      {selectedProduct.fullDescription || selectedProduct.description}
                     </p>
                   </div>
 
-                  <div className="bg-pink-50 p-6 rounded-2xl border border-pink-200">
-                    <h4 className="font-bold text-gray-900 mb-2">✨ Características</h4>
-                    <ul className="text-gray-700 space-y-2 text-sm">
-                      <li>✓ Algodão puro e seguro</li>
-                      <li>✓ Ideal para recém-nascidos</li>
-                      <li>✓ Macio e confortável</li>
-                      <li>✓ Fácil de lavar</li>
-                    </ul>
-                  </div>
+                  {/* Especificações dinâmicas do produto */}
+                  {Object.keys(selectedProduct.specifications).length > 0 && (
+                    <div className="bg-pink-50 p-6 rounded-2xl border border-pink-200">
+                      <h4 className="font-bold text-gray-900 mb-3">✨ Especificações</h4>
+                      <ul className="text-gray-700 space-y-2 text-sm">
+                        {Object.entries(selectedProduct.specifications).map(([key, value]) => (
+                          <li key={key}>
+                            <span className="font-semibold">{key}:</span> {value}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200">
-                    <h4 className="font-bold text-gray-900 mb-2">📋 Cuidados</h4>
-                    <p className="text-gray-700 text-sm">
-                      Lavar em água morna com sabão neutro. Secar ao ar livre. Não usar alvejante.
-                    </p>
-                  </div>
+                  {selectedProduct.specifications['Lavagem'] && (
+                    <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+                      <h4 className="font-bold text-gray-900 mb-2">📋 Cuidados</h4>
+                      <p className="text-gray-700 text-sm">
+                        {selectedProduct.specifications['Lavagem']}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

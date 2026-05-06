@@ -9,7 +9,6 @@ import { uploadImage } from '@/lib/uploadImage';
 import NewsletterTab from '@/app/components/admin/NewsletterTab'
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
-    const supabase = createSupabaseClient();
 
 type Category = {
     id: string;
@@ -36,6 +35,7 @@ type Category = {
 
     const AdminDashboard: React.FC = () => {
     const router = useRouter();
+    const supabase = useMemo(() => createSupabaseClient(), []);
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
