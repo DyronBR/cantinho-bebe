@@ -2,6 +2,13 @@ import { createBrowserClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 
 /**
+ * Remove barra final da URL para evitar caminhos inválidos como
+ * "https://xxxx.supabase.co//rest/v1/..." que causam o erro
+ * "Invalid path specified in request URL".
+ */
+const sanitizeUrl = (url: string) => url.replace(/\/+$/, '')
+
+/**
  * Cliente Supabase para browser / componentes client.
  * Usa @supabase/ssr para guardar a sessão em COOKIES — necessário para que
  * o proxy.ts no servidor consiga ler a sessão e proteger /admin/*.
@@ -14,7 +21,7 @@ export const createSupabaseClient = () => {
         throw new Error('Variáveis de ambiente do Supabase não encontradas. Verifique NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.')
     }
 
-    return createBrowserClient(supabaseUrl, supabaseAnonKey)
+    return createBrowserClient(sanitizeUrl(supabaseUrl), supabaseAnonKey)
 }
 
 /**
@@ -29,7 +36,7 @@ export const createSupabaseAdminClient = () => {
         throw new Error('Variáveis de ambiente do Supabase admin não encontradas. Verifique NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.')
     }
 
-    return createClient(supabaseUrl, serviceRoleKey, {
+    return createClient(sanitizeUrl(supabaseUrl), serviceRoleKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false,
